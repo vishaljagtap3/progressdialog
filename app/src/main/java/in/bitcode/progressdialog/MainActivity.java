@@ -1,9 +1,12 @@
 package in.bitcode.progressdialog;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,96 +29,36 @@ public class MainActivity extends AppCompatActivity {
                 String[] urls = {
                         "http://bitcode.in/android/file1",
                         "http://bitcode.in/android/file2",
-                        "http://bitcode.in/android/file3",
-                        "http://bitcode.in/android/file4"
                 };
-                new MyDownloadThread()
+                new MyDownloadThread( MainActivity.this, new MyHandler() )
                         .execute(urls);
 
             }
         });
     }
 
-    class MyDownloadThread extends AsyncTask<String, Integer, Float> {
-
-        //private String mUrl;
-        /*public MyDownloadThread(String url) {
-            mUrl = url;
-        }*/
-
-        //Executed by main thread
+    public class MyHandler extends android.os.Handler {
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            Log.e("tag", "onPreExecute: " + Thread.currentThread().getName());
-            mBtnDownload.setEnabled(false);
-        }
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
 
-        //Executed by worker thread
-        @Override
-        protected Float doInBackground(String... urls) {
+            if( msg == null ) {
+                return;
+            }
 
-            Log.e("tag", "doInBackground: " + Thread.currentThread().getName());
-
-            for (String url : urls) {
-                for (int i = 0; i <= 100; i++) {
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    Log.e("tag", url + " " + i + "%");
-
-                    Integer[] iResults = {i};
-                    publishProgress(iResults);
+            if( msg.arg1 == Config.RES_FINAL ) {
+                String[] localUrls = (String[]) msg.obj;
+                for (String localUrl : localUrls) {
+                    Log.e("tag", localUrl);
                 }
             }
-            return 80.80f;
-        }
-
-        //Executed by main thread
-        @Override
-        protected void onPostExecute(Float res) {
-            super.onPostExecute(res);
-
-            Log.e("tag", "onPostExecute " + res + " " + Thread.currentThread().getName());
-
-            mBtnDownload.setText(res + "");
-            if (!mBtnDownload.isEnabled()) {
-                mBtnDownload.setEnabled(true);
+            if( msg.arg1 == Config.RES_INETRMEDIATE ) {
+                Integer [] iResults = (Integer[]) msg.obj;
+                mBtnDownload.setText( iResults[0] + "%");
             }
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            Log.e("tag", "onProgressUpdate " + Thread.currentThread().getName() );
-            mBtnDownload.setText( values[0] +  "%");
         }
     }
 
-
-    class DownloadThread extends Thread {
-
-        private String mUrl;
-
-        public DownloadThread(String url) {
-            mUrl = url;
-        }
-
-        @Override
-        public void run() {
-            for (int i = 0; i <= 100; i++) {
-                //mBtnDownload.setText(i + "%");
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Log.e("tag", mUrl + " " + i + "%");
-            }
-        }
-    }
 }
 
 
